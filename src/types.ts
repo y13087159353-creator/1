@@ -56,6 +56,7 @@ export interface ExpenseRecord {
   amount: number;
   paidBy: string;
   timestamp: string;
+  createdAt?: number;
   notes?: string;
 }
 

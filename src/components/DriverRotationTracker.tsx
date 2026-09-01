@@ -24,7 +24,7 @@ export const DriverRotationTracker: React.FC = () => {
 
   const updateSharedState = async (newDrivers: any[], newIndex: number) => {
     try {
-      await updateDriverTracker({ currentActiveDriverIndex: index });
+      await updateDriverTracker({ drivers: newDrivers, currentActiveDriverIndex: newIndex });
     } catch (e) {
       console.error("Error updating driver state:", e);
     }
@@ -151,7 +151,10 @@ export const DriverRotationTracker: React.FC = () => {
                   ? 'bg-blue-50 border-blue-200 ring-1 ring-blue-600/20'
                   : 'bg-white border-slate-200 hover:border-slate-300 hover:bg-slate-50'
               }`}
-              onClick={() => setCurrentActiveDriverIndex(idx)}
+              onClick={() => {
+                setCurrentActiveDriverIndex(idx);
+                updateSharedState(drivers, idx);
+              }}
             >
               <div className="flex items-center justify-between">
                 <span className={`text-xs font-bold ${currentActiveDriverIndex === idx ? 'text-blue-700' : 'text-slate-500'}`}>司机 0{idx + 1}</span>
