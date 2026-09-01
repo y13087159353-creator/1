@@ -840,10 +840,10 @@ export const TIBET_CHECKLIST_INITIAL: ChecklistCategory[] = [
     name: '🪪 证件与重要文件',
     icon: 'FileText',
     items: [
-      { id: 'doc-1', label: '身份证（原件，每人随身携带）', description: '进出藏沿途多个检查站需刷身份证查验', checked: true, required: true },
-      { id: 'doc-2', label: '驾驶证 & 行驶证（原件）', description: 'SUV过检查站与加油实名登记必需', checked: true, required: true },
-      { id: 'doc-3', label: '车辆保险单（含电子保单与救援电话）', description: '进藏前核实人保/平安等高原免费救援范围', checked: true, required: true },
-      { id: 'doc-4', label: '边防证（若前往珠峰/墨脱/阿里需备，本路线常规318/317免边防证）', description: '户籍地免费办理或拉萨代办', checked: true, required: false },
+      { id: 'doc-1', label: '身份证（原件，每人随身携带）', description: '进出藏沿途多个检查站需刷身份证查验', checked: false, required: true },
+      { id: 'doc-2', label: '驾驶证 & 行驶证（原件）', description: 'SUV过检查站与加油实名登记必需', checked: false, required: true },
+      { id: 'doc-3', label: '车辆保险单（含电子保单与救援电话）', description: '进藏前核实人保/平安等高原免费救援范围', checked: false, required: true },
+      { id: 'doc-4', label: '边防证（若前往珠峰/墨脱/阿里需备，本路线常规318/317免边防证）', description: '户籍地免费办理或拉萨代办', checked: false, required: false },
     ],
   },
   {
@@ -851,11 +851,11 @@ export const TIBET_CHECKLIST_INITIAL: ChecklistCategory[] = [
     name: '💊 高原药品与急救包',
     icon: 'HeartPulse',
     items: [
-      { id: 'med-1', label: '便携式医用氧气罐（每人备2-3罐）', description: '折多山、东达山、纳木错等急用', checked: true, required: true },
-      { id: 'med-2', label: '红景天 / 高原安（出发前7天起服用）', description: '预防急性高原反应', checked: true, required: true },
-      { id: 'med-3', label: '葡萄糖口服液 & 散列通/布洛芬', description: '快速补充能量缓解高反头痛', checked: true, required: true },
-      { id: 'med-4', label: '肠胃药（蒙脱石散、黄连素） & 感冒冲剂', description: '高原严防感冒，水土不服急用', checked: true, required: true },
-      { id: 'med-5', label: '指夹式血氧仪（1台）', description: '监测全员血氧饱和度（低于75需吸氧）', checked: true, required: true },
+      { id: 'med-1', label: '便携式医用氧气罐（每人备2-3罐）', description: '折多山、东达山、纳木错等急用', checked: false, required: true },
+      { id: 'med-2', label: '红景天 / 高原安（出发前7天起服用）', description: '预防急性高原反应', checked: false, required: true },
+      { id: 'med-3', label: '葡萄糖口服液 & 散列通/布洛芬', description: '快速补充能量缓解高反头痛', checked: false, required: true },
+      { id: 'med-4', label: '肠胃药（蒙脱石散、黄连素） & 感冒冲剂', description: '高原严防感冒，水土不服急用', checked: false, required: true },
+      { id: 'med-5', label: '指夹式血氧仪（1台）', description: '监测全员血氧饱和度（低于75需吸氧）', checked: false, required: true },
       { id: 'med-6', label: '晕车贴 / 创可贴 / 碘伏棉签', description: '天路72拐、觉巴山盘山公路晕车备用', checked: false, required: false },
     ],
   },
@@ -864,9 +864,9 @@ export const TIBET_CHECKLIST_INITIAL: ChecklistCategory[] = [
     name: '🚗 车辆自驾与脱困装备',
     icon: 'Car',
     items: [
-      { id: 'car-1', label: '全车进藏深度点检（机油、刹车片、防冻液、电瓶）', description: '成都休整日务必去汽修厂升底盘检查', checked: true, required: true },
-      { id: 'car-2', label: '备胎检查与充气、千斤顶、换胎扳手', description: '确保备胎胎压充足，工具齐备', checked: true, required: true },
-      { id: 'car-3', label: '便携式充气泵 + 补胎胶条工具套装', description: '高原扎钉子可应急自救', checked: true, required: true },
+      { id: 'car-1', label: '全车进藏深度点检（机油、刹车片、防冻液、电瓶）', description: '成都休整日务必去汽修厂升底盘检查', checked: false, required: true },
+      { id: 'car-2', label: '备胎检查与充气、千斤顶、换胎扳手', description: '确保备胎胎压充足，工具齐备', checked: false, required: true },
+      { id: 'car-3', label: '便携式充气泵 + 补胎胶条工具套装', description: '高原扎钉子可应急自救', checked: false, required: true },
       { id: 'car-4', label: '防滑链（适配SUV轮胎尺寸1套）', description: '东达山、雀儿山若遇突降早雪强制挂链', checked: false, required: true },
       { id: 'car-5', label: '汽车应急搭电宝 / 强光手电筒', description: '高原低温电瓶易亏电，夜间修车照明', checked: false, required: true },
       { id: 'car-6', label: '大容量玻璃水（-25℃耐低温型）2瓶', description: '高原泥泞与落石扬尘极费玻璃水', checked: false, required: true },
@@ -877,11 +877,11 @@ export const TIBET_CHECKLIST_INITIAL: ChecklistCategory[] = [
     name: '🧥 防寒保暖与户外防晒',
     icon: 'Shield',
     items: [
-      { id: 'clo-1', label: '三合一冲锋衣 / 轻薄羽绒服', description: '早晚温差超过20℃，垭口风大刺骨', checked: true, required: true },
-      { id: 'clo-2', label: '高倍防晒霜（SPF50+ PA++++）+ 防晒唇膏', description: '高原紫外线极强，避免晒伤脱皮', checked: true, required: true },
-      { id: 'clo-3', label: '偏光太阳镜（每人1副，驾驶员必备）', description: '雪山反光与强光刺眼，防雪盲', checked: true, required: true },
+      { id: 'clo-1', label: '三合一冲锋衣 / 轻薄羽绒服', description: '早晚温差超过20℃，垭口风大刺骨', checked: false, required: true },
+      { id: 'clo-2', label: '高倍防晒霜（SPF50+ PA++++）+ 防晒唇膏', description: '高原紫外线极强，避免晒伤脱皮', checked: false, required: true },
+      { id: 'clo-3', label: '偏光太阳镜（每人1副，驾驶员必备）', description: '雪山反光与强光刺眼，防雪盲', checked: false, required: true },
       { id: 'clo-4', label: '保暖防风帽 + 魔术头巾 + 保暖手套', description: '垭口拍照护住头部防受风头痛', checked: false, required: true },
-      { id: 'clo-5', label: '大容量保温杯（每人1个）', description: '高原多喝温热水是缓解高反神器', checked: true, required: true },
+      { id: 'clo-5', label: '大容量保温杯（每人1个）', description: '高原多喝温热水是缓解高反神器', checked: false, required: true },
     ],
   },
   {
@@ -889,11 +889,11 @@ export const TIBET_CHECKLIST_INITIAL: ChecklistCategory[] = [
     name: '🔋 电子设备与随车补给',
     icon: 'Zap',
     items: [
-      { id: 'ele-1', label: '大容量充电宝（20000mAh）2个', description: '低温下手机电池掉电极快', checked: true, required: true },
-      { id: 'ele-2', label: '车充扩展坞（多口PD快充）', description: '保障全车4人手机及设备沿途充电', checked: true, required: true },
-      { id: 'ele-3', label: '离线地图包下载（高德/百度：四川、西藏、青海、陕西离线包）', description: '部分高山峡谷无手机信号', checked: true, required: true },
+      { id: 'ele-1', label: '大容量充电宝（20000mAh）2个', description: '低温下手机电池掉电极快', checked: false, required: true },
+      { id: 'ele-2', label: '车充扩展坞（多口PD快充）', description: '保障全车4人手机及设备沿途充电', checked: false, required: true },
+      { id: 'ele-3', label: '离线地图包下载（高德/百度：四川、西藏、青海、陕西离线包）', description: '部分高山峡谷无手机信号', checked: false, required: true },
       { id: 'ele-4', label: '车载对讲机 / 蓝牙免提耳机', description: '3位司机轮换与观察路况', checked: false, required: false },
-      { id: 'ele-5', label: '高能量零食（士力架、牛肉干、巧克力、红牛/电解质水）', description: '赶路错过饭点应急饱腹', checked: true, required: true },
+      { id: 'ele-5', label: '高能量零食（士力架、牛肉干、巧克力、红牛/电解质水）', description: '赶路错过饭点应急饱腹', checked: false, required: true },
     ],
   },
 ];
@@ -903,12 +903,4 @@ export const INITIAL_EXPENSE_PRESET: {
   title: string;
   amount: number;
   notes: string;
-}[] = [
-  { category: 'fuel', title: '全路程SUV燃油费 (约7500公里)', amount: 6200, notes: '四驱SUV百公里约10-11L，沿途92#/95#汽油预估' },
-  { category: 'toll', title: '高速过路费 (非免费日+进藏前高速)', amount: 1600, notes: '国庆期间免高速费，省下大笔开销' },
-  { category: 'hotel', title: '全线21晚住宿费 (2间标准间)', amount: 7000, notes: '均价约330元/晚/间，拉萨、林芝、波密、重庆' },
-  { category: 'food', title: '全员餐饮与特色美食体验', amount: 12000, notes: '4人22天，鲁朗石锅鸡、重庆火锅、保定驴肉火烧、藏餐等' },
-  { category: 'ticket', title: '核心景区门票与观光车', amount: 3200, notes: '布达拉宫、大昭寺、纳木错、米堆冰川等' },
-  { category: 'supplies', title: '成都大采购物资与应急药品装备', amount: 1800, notes: '医用氧气罐、葡萄糖、防滑链、应急补胎工具' },
-  { category: 'other', title: '机动应急预备金', amount: 8200, notes: '车辆保养检查、突发路况周转金（资金非常充裕）' },
-];
+}[] = [];

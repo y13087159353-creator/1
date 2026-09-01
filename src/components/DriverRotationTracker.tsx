@@ -1,6 +1,8 @@
 import React from 'react';
 import { ITINERARY_DAYS } from '../data/itineraryData';
-import { Car, Clock, ShieldAlert, Users, Play, Pause, RotateCcw, AlertTriangle, CheckCircle2, Phone } from 'lucide-react';
+import { Car, Clock, ShieldAlert, Users, Play, Pause, RotateCcw, AlertTriangle, CheckCircle2, Phone, Edit2 } from 'lucide-react';
+import { subscribeToDriverTracker, updateDriverTracker } from '../lib/dataService';
+
 
 export const DriverRotationTracker: React.FC = () => {
   // 3 Drivers state
@@ -10,6 +12,24 @@ export const DriverRotationTracker: React.FC = () => {
     { id: '3', name: '司机 3 (轮换/机动)', phone: '137****3333', role: '平原赶路与休息替补' },
   ]);
 
+  const [currentActiveDriverIndex, setCurrentActiveDriverIndex] = React.useState(0);
+
+  React.useEffect(() => {
+    const unsub = subscribeToDriverTracker((data) => {
+      if (data.drivers) setDrivers(data.drivers);
+      if (data.currentActiveDriverIndex !== undefined) setCurrentActiveDriverIndex(data.currentActiveDriverIndex);
+    });
+    return () => unsub();
+  }, []);
+
+  const updateSharedState = async (newDrivers: any[], newIndex: number) => {
+    try {
+      await updateDriverTracker({ currentActiveDriverIndex: index });
+    } catch (e) {
+      console.error("Error updating driver state:", e);
+    }
+  };
+
   const [editingDriverId, setEditingDriverId] = React.useState<string | null>(null);
   const [tempName, setTempName] = React.useState('');
 
@@ -17,7 +37,6 @@ export const DriverRotationTracker: React.FC = () => {
   const SHIFT_DURATION = 3 * 60 * 60;
   const [timeLeft, setTimeLeft] = React.useState(SHIFT_DURATION);
   const [isTimerRunning, setIsTimerRunning] = React.useState(false);
-  const [currentActiveDriverIndex, setCurrentActiveDriverIndex] = React.useState(0);
 
   React.useEffect(() => {
     let interval: any = null;
@@ -39,7 +58,9 @@ export const DriverRotationTracker: React.FC = () => {
   };
 
   const handleNextDriver = () => {
-    setCurrentActiveDriverIndex((prev) => (prev + 1) % 3);
+    const nextIndex = (currentActiveDriverIndex + 1) % 3;
+    setCurrentActiveDriverIndex(nextIndex);
+    updateSharedState(drivers, nextIndex);
     setTimeLeft(SHIFT_DURATION);
     setIsTimerRunning(true);
   };
@@ -47,6 +68,15 @@ export const DriverRotationTracker: React.FC = () => {
   const handleResetTimer = () => {
     setIsTimerRunning(false);
     setTimeLeft(SHIFT_DURATION);
+  };
+
+  const handleSaveDriverName = (id: string) => {
+    if (tempName.trim()) {
+      const updatedDrivers = drivers.map(d => d.id === id ? { ...d, name: tempName.trim() } : d);
+      setDrivers(updatedDrivers);
+      updateSharedState(updatedDrivers, currentActiveDriverIndex);
+    }
+    setEditingDriverId(null);
   };
 
   return (
@@ -131,7 +161,34 @@ export const DriverRotationTracker: React.FC = () => {
                   </span>
                 )}
               </div>
-              <div className="text-sm font-bold text-slate-900 mt-2">{d.name}</div>
+              
+              {editingDriverId === d.id ? (
+                <div className="mt-2" onClick={(e) => e.stopPropagation()}>
+                  <input
+                    type="text"
+                    value={tempName}
+                    onChange={(e) => setTempName(e.target.value)}
+                    onBlur={() => handleSaveDriverName(d.id)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleSaveDriverName(d.id)}
+                    autoFocus
+                    className="w-full text-sm font-bold text-slate-900 bg-white border border-blue-400 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                  />
+                </div>
+              ) : (
+                <div 
+                  className="text-sm font-bold text-slate-900 mt-2 hover:text-blue-600 flex justify-between items-center group/edit"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setEditingDriverId(d.id);
+                    setTempName(d.name);
+                  }}
+                  title="点击修改司机名字"
+                >
+                  <span className="truncate">{d.name}</span>
+                  <Edit2 className="w-3.5 h-3.5 text-slate-300 opacity-0 group-hover/edit:opacity-100 transition-opacity shrink-0 ml-2" />
+                </div>
+              )}
+
               <div className="text-[11px] text-slate-500 mt-1 font-medium">{d.role}</div>
             </div>
           ))}

@@ -7,6 +7,7 @@ import { BudgetCalculator } from './components/BudgetCalculator';
 import { TibetChecklist } from './components/TibetChecklist';
 import { RouteMapVisualizer } from './components/RouteMapVisualizer';
 import { PrintRoadbook } from './components/PrintRoadbook';
+import { OfflineGuide } from './components/OfflineGuide';
 import { ITINERARY_DAYS, PHASES } from './data/itineraryData';
 import { 
   Search, 
@@ -19,7 +20,8 @@ import {
   PhoneCall, 
   Printer, 
   Car, 
-  HelpCircle 
+  HelpCircle,
+  WifiOff
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
@@ -108,10 +110,26 @@ export default function App() {
 
   const jumpToDay = (dayNum: number) => {
     setActiveTab('itinerary');
-    const el = document.getElementById(`day-card-${dayNum}`);
-    if (el) {
-      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }
+    
+    // 清除可能导致该天被隐藏的筛选条件
+    setSelectedPhaseFilter('all');
+    setFilterTag('all');
+    setSearchQuery('');
+
+    // 延迟等待 React 渲染完成（切换 Tab 及取消过滤）后再执行滚动
+    setTimeout(() => {
+      const el = document.getElementById(`day-card-${dayNum}`);
+      if (el) {
+        // 滚动到该元素
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        
+        // 可选：添加一个高亮闪烁效果
+        el.classList.add('ring-4', 'ring-blue-500', 'ring-offset-2', 'transition-all', 'duration-500');
+        setTimeout(() => {
+          el.classList.remove('ring-4', 'ring-blue-500', 'ring-offset-2');
+        }, 1500);
+      }
+    }, 150);
   };
 
   if (isPrintMode) {
@@ -133,6 +151,17 @@ export default function App() {
         {/* TAB 1: 22 Days Daily Itinerary */}
         {activeTab === 'itinerary' && (
           <div className="space-y-6">
+            {/* Offline Alert Prompt */}
+            <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 flex items-start sm:items-center gap-3 shadow-sm">
+              <WifiOff className="w-5 h-5 text-blue-600 shrink-0 sm:mt-0 mt-0.5" />
+              <div className="text-sm text-blue-800 flex-1">
+                <strong className="font-bold">离线访问提示：</strong> 川藏线沿途部分地区无网络信号，强烈建议在有网时将本应用保存至手机桌面，以便无网环境离线查看路书。
+              </div>
+              <a href="#offline-guide" className="shrink-0 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 px-3 py-1.5 rounded-lg transition-colors shadow-sm">
+                查看教程
+              </a>
+            </div>
+
             {/* Filter & Quick Navigation Jump Bar */}
             <div className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 shadow-sm">
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -274,6 +303,11 @@ export default function App() {
                 ))}
               </div>
             )}
+
+            {/* Offline Guide Section */}
+            <div id="offline-guide" className="scroll-mt-6">
+              <OfflineGuide />
+            </div>
           </div>
         )}
 

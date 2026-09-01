@@ -61,97 +61,110 @@ export const ElevationProfile: React.FC<ElevationProfileProps> = ({ onSelectDay 
 
         {/* SVG Interactive Altitude Chart */}
         <div className="mt-6 relative overflow-x-auto pb-4">
-          <div className="min-w-[840px] h-[340px] relative bg-slate-50 rounded-2xl p-4 border border-slate-200 shadow-inner">
-            {/* Grid lines */}
-            <div className="absolute inset-0 p-6 flex flex-col justify-between pointer-events-none text-[10px] text-slate-500 font-mono font-medium">
-              <div className="border-b border-red-200 flex justify-between">
-                <span className="text-red-600 font-bold">5000m (极限高寒区)</span>
-                <span className="text-red-600 font-bold">那根拉 5190m / 东达山 5130m</span>
+          <div className="min-w-[840px] h-[360px] relative bg-slate-50 rounded-2xl p-4 border border-slate-200 shadow-inner">
+            
+            {/* Chart Area (Common coordinate system for grid and bars) */}
+            <div className="absolute inset-x-6 top-10 bottom-10">
+              {/* Grid lines */}
+              <div className="absolute inset-0 pointer-events-none text-[10px] font-mono font-medium z-0">
+                {/* 5000m Line */}
+                <div className="absolute w-full border-t border-red-200 flex justify-between" style={{ bottom: `${(5000 / 5500) * 100}%` }}>
+                  <span className="-mt-4 text-red-600 font-bold">5000m (极限高寒区)</span>
+                  <span className="-mt-4 text-red-600 font-bold">那根拉 5190m / 东达山 5130m</span>
+                </div>
+                {/* 4000m Line */}
+                <div className="absolute w-full border-t border-orange-200 flex justify-between" style={{ bottom: `${(4000 / 5500) * 100}%` }}>
+                  <span className="-mt-4 text-orange-600 font-bold">4000m (高反高发区)</span>
+                  <span className="-mt-4 text-orange-600 font-bold">理塘 4014m / 业拉山 4658m</span>
+                </div>
+                {/* 3000m Line */}
+                <div className="absolute w-full border-t border-blue-200 flex justify-between" style={{ bottom: `${(3000 / 5500) * 100}%` }}>
+                  <span className="-mt-4 text-blue-600 font-bold">3000m (轻微高反区)</span>
+                  <span className="-mt-4 text-blue-600 font-bold">拉萨 3650m / 林芝 2900m</span>
+                </div>
+                {/* 2000m Line */}
+                <div className="absolute w-full border-t border-emerald-200/50 flex justify-between" style={{ bottom: `${(2000 / 5500) * 100}%` }}>
+                  <span className="-mt-4 text-emerald-600/80 font-bold">2000m (过渡区)</span>
+                </div>
+                {/* 1000m Line */}
+                <div className="absolute w-full border-t border-emerald-200 flex justify-between" style={{ bottom: `${(1000 / 5500) * 100}%` }}>
+                  <span className="-mt-4 text-emerald-600 font-bold">1000m (平原/低山)</span>
+                  <span className="-mt-4 text-emerald-600 font-bold">保定 20m / 重庆 280m / 成都 500m</span>
+                </div>
+                {/* 0m Line */}
+                <div className="absolute w-full border-t border-slate-200 flex justify-between" style={{ bottom: '0%' }}>
+                  <span className="mt-1 text-slate-400">0m 海平面</span>
+                  <span className="mt-1 text-slate-400">通辽 180m</span>
+                </div>
               </div>
-              <div className="border-b border-orange-200 flex justify-between">
-                <span className="text-orange-600 font-bold">4000m (高反高发区)</span>
-                <span className="text-orange-600 font-bold">理塘 4014m / 业拉山 4658m</span>
-              </div>
-              <div className="border-b border-blue-200 flex justify-between">
-                <span className="text-blue-600 font-bold">3000m (轻微高反区)</span>
-                <span className="text-blue-600 font-bold">拉萨 3650m / 林芝 2900m</span>
-              </div>
-              <div className="border-b border-emerald-200 flex justify-between">
-                <span className="text-emerald-600 font-bold">1000m (平原/低山)</span>
-                <span className="text-emerald-600 font-bold">保定 20m / 重庆 280m / 成都 500m</span>
-              </div>
-              <div className="flex justify-between text-slate-400">
-                <span>0m 海平面</span>
-                <span>通辽 180m</span>
-              </div>
-            </div>
 
-            {/* SVG Visual Bars / Curve */}
-            <div className="relative h-full flex items-end justify-between px-6 pt-6 pb-2 z-10">
-              {ITINERARY_DAYS.map((day) => {
-                const heightPercent = ((day.maxAltitude - minAlt) / (maxAlt - minAlt)) * 100;
-                const isPass = keyPasses.find((p) => p.dayNumber === day.dayNumber);
-                const isHovered = hoveredDay === day.dayNumber;
+              {/* SVG Visual Bars / Curve */}
+              <div className="absolute inset-0 flex items-end justify-between z-10">
+                {ITINERARY_DAYS.map((day) => {
+                  const heightPercent = ((day.maxAltitude - minAlt) / (maxAlt - minAlt)) * 100;
+                  const isPass = keyPasses.find((p) => p.dayNumber === day.dayNumber);
+                  const isHovered = hoveredDay === day.dayNumber;
 
-                // Color calculation
-                let barColor = 'from-emerald-500 to-emerald-400';
-                if (day.maxAltitude >= 4800) {
-                  barColor = 'from-red-500 via-red-400 to-orange-400';
-                } else if (day.maxAltitude >= 4000) {
-                  barColor = 'from-orange-500 to-orange-400';
-                } else if (day.maxAltitude >= 2500) {
-                  barColor = 'from-blue-500 to-blue-400';
-                }
+                  // Color calculation
+                  let barColor = 'from-emerald-500 to-emerald-400';
+                  if (day.maxAltitude >= 4800) {
+                    barColor = 'from-red-500 via-red-400 to-orange-400';
+                  } else if (day.maxAltitude >= 4000) {
+                    barColor = 'from-orange-500 to-orange-400';
+                  } else if (day.maxAltitude >= 2500) {
+                    barColor = 'from-blue-500 to-blue-400';
+                  }
 
-                return (
-                  <div
-                    key={day.dayNumber}
-                    className="flex-1 flex flex-col items-center group relative cursor-pointer mx-1"
-                    onMouseEnter={() => setHoveredDay(day.dayNumber)}
-                    onMouseLeave={() => setHoveredDay(null)}
-                    onClick={() => onSelectDay && onSelectDay(day.dayNumber)}
-                  >
-                    {/* Hover Card Tooltip */}
-                    {isHovered && (
-                      <div className="absolute -top-28 z-30 bg-white border border-slate-200 shadow-xl rounded-xl p-3 w-48 text-left pointer-events-none transform -translate-x-1/2 left-1/2">
-                        <div className="text-[11px] font-bold text-blue-600">
-                          第{day.dayNumber}天 · {day.date}
-                        </div>
-                        <div className="text-xs font-bold text-slate-900 truncate mt-1">
-                          {day.routeTitle}
-                        </div>
-                        <div className="text-[11px] text-slate-700 font-semibold mt-1">
-                          最高: {day.maxAltitude}m ({day.maxAltitudeLocation})
-                        </div>
-                        <div className="text-[10px] text-slate-500 mt-0.5">
-                          终点海拔: {day.endAltitude}m ｜ {day.distanceKm}km
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Pass Marker Label */}
-                    {isPass && (
-                      <div className="absolute -top-12 flex flex-col items-center pointer-events-none">
-                        <span className="text-[9px] font-bold text-white bg-slate-900 px-1.5 py-0.5 rounded shadow whitespace-nowrap">
-                          {isPass.alt}m
-                        </span>
-                        <div className="w-1 h-3 bg-slate-900/50 mt-0.5" />
-                      </div>
-                    )}
-
-                    {/* The Bar */}
+                  return (
                     <div
-                      style={{ height: `${Math.max(heightPercent, 6)}%` }}
-                      className={`w-full max-w-[20px] rounded-t-md bg-gradient-to-t ${barColor} transition-all duration-300 group-hover:brightness-110 group-hover:scale-y-105 shadow-sm opacity-90`}
-                    />
+                      key={day.dayNumber}
+                      className="flex-1 flex flex-col items-center group relative cursor-pointer mx-1 h-full justify-end"
+                      onMouseEnter={() => setHoveredDay(day.dayNumber)}
+                      onMouseLeave={() => setHoveredDay(null)}
+                      onClick={() => onSelectDay && onSelectDay(day.dayNumber)}
+                    >
+                      {/* Hover Card Tooltip */}
+                      {isHovered && (
+                        <div className="absolute -top-32 z-30 bg-white border border-slate-200 shadow-xl rounded-xl p-3 w-48 text-left pointer-events-none transform -translate-x-1/2 left-1/2">
+                          <div className="text-[11px] font-bold text-blue-600">
+                            第{day.dayNumber}天 · {day.date}
+                          </div>
+                          <div className="text-xs font-bold text-slate-900 truncate mt-1">
+                            {day.routeTitle}
+                          </div>
+                          <div className="text-[11px] text-slate-700 font-semibold mt-1">
+                            最高: {day.maxAltitude}m ({day.maxAltitudeLocation})
+                          </div>
+                          <div className="text-[10px] text-slate-500 mt-0.5">
+                            终点海拔: {day.endAltitude}m ｜ {day.distanceKm}km
+                          </div>
+                        </div>
+                      )}
 
-                    {/* Day Number Label */}
-                    <span className="text-[10px] font-bold text-slate-400 mt-2 group-hover:text-blue-600">
-                      D{day.dayNumber}
-                    </span>
-                  </div>
-                );
-              })}
+                      {/* Pass Marker Label */}
+                      {isPass && (
+                        <div className="absolute flex flex-col items-center pointer-events-none z-20" style={{ bottom: `${Math.max(heightPercent, 1) + 2}%` }}>
+                          <span className="text-[9px] font-bold text-white bg-slate-900 px-1.5 py-0.5 rounded shadow whitespace-nowrap">
+                            {isPass.alt}m
+                          </span>
+                          <div className="w-0.5 h-3 bg-slate-900 mt-0.5" />
+                        </div>
+                      )}
+
+                      {/* The Bar */}
+                      <div
+                        style={{ height: `${Math.max(heightPercent, 1)}%` }}
+                        className={`w-full max-w-[20px] rounded-t-md bg-gradient-to-t ${barColor} transition-all duration-300 group-hover:brightness-110 group-hover:scale-y-105 shadow-sm opacity-90 origin-bottom`}
+                      />
+
+                      {/* Day Number Label */}
+                      <span className="absolute -bottom-7 text-[10px] font-bold text-slate-400 group-hover:text-blue-600">
+                        D{day.dayNumber}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           </div>
         </div>

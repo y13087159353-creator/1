@@ -1,66 +1,81 @@
 import React from 'react';
 import { TIBET_CHECKLIST_INITIAL } from '../data/itineraryData';
 import { ChecklistCategory } from '../types';
-import { CheckSquare, Square, Plus, Sparkles, AlertCircle, ShieldCheck } from 'lucide-react';
+import { CheckSquare, Square, Plus, Sparkles, AlertCircle, ShieldCheck, Trash2 } from 'lucide-react';
+import { subscribeToChecklist, updateChecklist } from '../lib/dataService';
 
 export const TibetChecklist: React.FC = () => {
-  const [categories, setCategories] = React.useState<ChecklistCategory[]>(() => {
-    const saved = localStorage.getItem('tibet_checklist_state');
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch (e) {
-        return TIBET_CHECKLIST_INITIAL;
-      }
+  const [categories, setCategories] = React.useState<ChecklistCategory[]>(TIBET_CHECKLIST_INITIAL);
+
+  React.useEffect(() => {
+    const unsub = subscribeToChecklist((newCategories) => {
+      setCategories(newCategories);
+    });
+    return () => unsub();
+  }, []);
+
+  const updateSharedState = async (newCategories: ChecklistCategory[]) => {
+    try {
+      await updateChecklist(newCategories);
+    } catch (e) {
+      console.error("Error updating checklist:", e);
     }
-    return TIBET_CHECKLIST_INITIAL;
-  });
+  };
 
   const [newItemText, setNewItemText] = React.useState('');
   const [targetCategory, setTargetCategory] = React.useState('medical');
 
-  React.useEffect(() => {
-    localStorage.setItem('tibet_checklist_state', JSON.stringify(categories));
-  }, [categories]);
-
   const toggleItem = (catId: string, itemId: string) => {
-    setCategories(
-      categories.map((cat) => {
-        if (cat.id !== catId) return cat;
-        return {
-          ...cat,
-          items: cat.items.map((item) => {
-            if (item.id !== itemId) return item;
-            return { ...item, checked: !item.checked };
-          }),
-        };
-      })
-    );
+    const newCategories = categories.map((cat) => {
+      if (cat.id !== catId) return cat;
+      return {
+        ...cat,
+        items: cat.items.map((item) => {
+          if (item.id !== itemId) return item;
+          return { ...item, checked: !item.checked };
+        }),
+      };
+    });
+    setCategories(newCategories); // Optimistic UI update
+    updateSharedState(newCategories);
   };
 
   const handleAddItem = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newItemText.trim()) return;
 
-    setCategories(
-      categories.map((cat) => {
-        if (cat.id !== targetCategory) return cat;
-        return {
-          ...cat,
-          items: [
-            ...cat.items,
-            {
-              id: `custom-${Date.now()}`,
-              label: newItemText.trim(),
-              checked: false,
-              required: false,
-            },
-          ],
-        };
-      })
-    );
+    const newCategories = categories.map((cat) => {
+      if (cat.id !== targetCategory) return cat;
+      return {
+        ...cat,
+        items: [
+          ...cat.items,
+          {
+            id: `custom-${Date.now()}`,
+            label: newItemText.trim(),
+            checked: false,
+            required: false,
+          },
+        ],
+      };
+    });
 
+    setCategories(newCategories);
+    updateSharedState(newCategories);
     setNewItemText('');
+  };
+
+  const handleDeleteItem = (e: React.MouseEvent, catId: string, itemId: string) => {
+    e.stopPropagation();
+    const newCategories = categories.map((cat) => {
+      if (cat.id !== catId) return cat;
+      return {
+        ...cat,
+        items: cat.items.filter((item) => item.id !== itemId),
+      };
+    });
+    setCategories(newCategories);
+    updateSharedState(newCategories);
   };
 
   // Calculate totals
@@ -174,6 +189,15 @@ export const TibetChecklist: React.FC = () => {
                       <div className={`text-[11px] mt-1 font-medium ${item.checked ? 'text-slate-400' : 'text-slate-500'}`}>{item.description}</div>
                     )}
                   </div>
+                  {item.id.startsWith('custom-') && (
+                    <button
+                      onClick={(e) => handleDeleteItem(e, cat.id, item.id)}
+                      className="p-1.5 ml-1 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-red-200"
+                      title="删除项"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  )}
                 </div>
               ))}
             </div>

@@ -1,76 +1,108 @@
-import React from 'react';
-import { Coins, Plus, Trash2, PieChart, Users, DollarSign, Wallet, CheckCircle2, FileSpreadsheet } from 'lucide-react';
-import { INITIAL_EXPENSE_PRESET } from '../data/itineraryData';
-import { ExpenseRecord } from '../types';
+import React from "react";
+import {
+  Coins,
+  Plus,
+  Trash2,
+  PieChart,
+  Users,
+  DollarSign,
+  Wallet,
+  CheckCircle2,
+  FileSpreadsheet,
+} from "lucide-react";
+import { INITIAL_EXPENSE_PRESET } from "../data/itineraryData";
+import { ExpenseRecord } from "../types";
+import {
+  subscribeToExpenses,
+  addExpense,
+  deleteExpense,
+} from "../lib/dataService";
 
 export const BudgetCalculator: React.FC = () => {
   const TOTAL_BUDGET = 40000;
   const TOTAL_PEOPLE = 4;
 
-  const [expenses, setExpenses] = React.useState<ExpenseRecord[]>(() => {
-    return INITIAL_EXPENSE_PRESET.map((item, idx) => ({
-      id: `init-${idx}`,
-      dayNumber: 0,
-      category: item.category,
-      title: item.title,
-      amount: item.amount,
-      paidBy: '公共公账',
-      timestamp: '预设预算',
-      notes: item.notes,
-    }));
-  });
+  const [expenses, setExpenses] = React.useState<ExpenseRecord[]>([]);
+  const [loading, setLoading] = React.useState(true);
 
-  const [newTitle, setNewTitle] = React.useState('');
-  const [newAmount, setNewAmount] = React.useState('');
-  const [newCategory, setNewCategory] = React.useState<ExpenseRecord['category']>('fuel');
-  const [newPayer, setNewPayer] = React.useState('公账');
-  const [newNotes, setNewNotes] = React.useState('');
+  React.useEffect(() => {
+    const unsubscribe = subscribeToExpenses((expenseData) => {
+      setExpenses(expenseData);
+      setLoading(false);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  const [newTitle, setNewTitle] = React.useState("");
+  const [newAmount, setNewAmount] = React.useState("");
+  const [newCategory, setNewCategory] =
+    React.useState<ExpenseRecord["category"]>("fuel");
+  const [newPayer, setNewPayer] = React.useState("公账");
+  const [newNotes, setNewNotes] = React.useState("");
 
   const totalSpent = expenses.reduce((sum, item) => sum + item.amount, 0);
   const remainingBudget = TOTAL_BUDGET - totalSpent;
   const perPersonTotal = totalSpent / TOTAL_PEOPLE;
 
-  const handleAddExpense = (e: React.FormEvent) => {
+  const handleAddExpense = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newTitle.trim() || !newAmount || parseFloat(newAmount) <= 0) return;
 
-    const record: ExpenseRecord = {
-      id: `exp-${Date.now()}`,
-      dayNumber: 1,
-      category: newCategory,
-      title: newTitle.trim(),
-      amount: parseFloat(newAmount),
-      paidBy: newPayer,
-      timestamp: new Date().toLocaleDateString(),
-      notes: newNotes,
-    };
-
-    setExpenses([record, ...expenses]);
-    setNewTitle('');
-    setNewAmount('');
-    setNewNotes('');
+    try {
+      await addExpense({
+        dayNumber: 1,
+        category: newCategory,
+        title: newTitle.trim(),
+        amount: parseFloat(newAmount),
+        paidBy: newPayer,
+        timestamp: new Date().toLocaleDateString(),
+        notes: newNotes,
+        createdAt: new Date().getTime(),
+      });
+      setNewTitle("");
+      setNewAmount("");
+      setNewNotes("");
+    } catch (error) {
+      console.error("Error adding expense: ", error);
+    }
   };
 
-  const handleDeleteExpense = (id: string) => {
-    setExpenses(expenses.filter((item) => item.id !== id));
+  const handleDeleteExpense = async (id: string) => {
+    try {
+      await deleteExpense(id);
+    } catch (error) {
+      console.error("Error deleting expense: ", error);
+    }
   };
 
-  const getCategoryLabel = (cat: ExpenseRecord['category']) => {
+  const getCategoryLabel = (cat: ExpenseRecord["category"]) => {
     switch (cat) {
-      case 'fuel':
-        return { label: '⛽ 燃油加油', color: 'text-amber-400 bg-amber-500/10' };
-      case 'toll':
-        return { label: '🛣️ 过路通行', color: 'text-sky-400 bg-sky-500/10' };
-      case 'hotel':
-        return { label: '🏨 住宿酒店', color: 'text-purple-400 bg-purple-500/10' };
-      case 'food':
-        return { label: '🍲 餐饮特色', color: 'text-emerald-400 bg-emerald-500/10' };
-      case 'ticket':
-        return { label: '🎟️ 门票景区', color: 'text-rose-400 bg-rose-500/10' };
-      case 'supplies':
-        return { label: '💊 氧气物资', color: 'text-teal-400 bg-teal-500/10' };
+      case "fuel":
+        return {
+          label: "⛽ 燃油加油",
+          color: "text-amber-400 bg-amber-500/10",
+        };
+      case "toll":
+        return { label: "🛣️ 过路通行", color: "text-sky-400 bg-sky-500/10" };
+      case "hotel":
+        return {
+          label: "🏨 住宿酒店",
+          color: "text-purple-400 bg-purple-500/10",
+        };
+      case "food":
+        return {
+          label: "🍲 餐饮特色",
+          color: "text-emerald-400 bg-emerald-500/10",
+        };
+      case "ticket":
+        return { label: "🎟️ 门票景区", color: "text-rose-400 bg-rose-500/10" };
+      case "supplies":
+        return { label: "💊 氧气物资", color: "text-teal-400 bg-teal-500/10" };
       default:
-        return { label: '📦 机动应急', color: 'text-slate-400 bg-slate-500/10' };
+        return {
+          label: "📦 机动应急",
+          color: "text-slate-400 bg-slate-500/10",
+        };
     }
   };
 
@@ -83,8 +115,12 @@ export const BudgetCalculator: React.FC = () => {
             <span>总规划预算 (4人)</span>
             <Wallet className="w-4 h-4 text-blue-500" />
           </div>
-          <div className="text-2xl font-black text-slate-900">¥ {TOTAL_BUDGET.toLocaleString()}</div>
-          <div className="text-[11px] text-slate-500 mt-1">人均规划预算 ¥ 10,000</div>
+          <div className="text-2xl font-black text-slate-900">
+            ¥ {TOTAL_BUDGET.toLocaleString()}
+          </div>
+          <div className="text-[11px] text-slate-500 mt-1">
+            人均规划预算 ¥ 10,000
+          </div>
         </div>
 
         <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
@@ -92,7 +128,9 @@ export const BudgetCalculator: React.FC = () => {
             <span>已登记花费</span>
             <Coins className="w-4 h-4 text-emerald-500" />
           </div>
-          <div className="text-2xl font-black text-emerald-600">¥ {totalSpent.toLocaleString()}</div>
+          <div className="text-2xl font-black text-emerald-600">
+            ¥ {totalSpent.toLocaleString()}
+          </div>
           <div className="text-[11px] text-slate-500 mt-1">
             占预算 {((totalSpent / TOTAL_BUDGET) * 100).toFixed(1)}%
           </div>
@@ -103,10 +141,14 @@ export const BudgetCalculator: React.FC = () => {
             <span>剩余可用预算 / 备用金</span>
             <DollarSign className="w-4 h-4 text-emerald-500" />
           </div>
-          <div className={`text-2xl font-black ${remainingBudget >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+          <div
+            className={`text-2xl font-black ${remainingBudget >= 0 ? "text-emerald-600" : "text-red-600"}`}
+          >
             ¥ {remainingBudget.toLocaleString()}
           </div>
-          <div className="text-[11px] text-slate-500 mt-1">资金非常充裕可覆盖应急</div>
+          <div className="text-[11px] text-slate-500 mt-1">
+            资金非常充裕可覆盖应急
+          </div>
         </div>
 
         <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
@@ -114,8 +156,12 @@ export const BudgetCalculator: React.FC = () => {
             <span>当前人均分摊</span>
             <Users className="w-4 h-4 text-purple-500" />
           </div>
-          <div className="text-2xl font-black text-purple-600">¥ {Math.round(perPersonTotal).toLocaleString()}</div>
-          <div className="text-[11px] text-slate-500 mt-1">4人均摊 (覆盖油路食宿门票)</div>
+          <div className="text-2xl font-black text-purple-600">
+            ¥ {Math.round(perPersonTotal).toLocaleString()}
+          </div>
+          <div className="text-[11px] text-slate-500 mt-1">
+            4人均摊 (覆盖油路食宿门票)
+          </div>
         </div>
       </div>
 
@@ -126,9 +172,14 @@ export const BudgetCalculator: React.FC = () => {
           <span>快速记一笔新开销</span>
         </h3>
 
-        <form onSubmit={handleAddExpense} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3">
+        <form
+          onSubmit={handleAddExpense}
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3"
+        >
           <div className="lg:col-span-2">
-            <label className="block text-[11px] text-slate-500 mb-1 font-medium">费用名称 / 事项</label>
+            <label className="block text-[11px] text-slate-500 mb-1 font-medium">
+              费用名称 / 事项
+            </label>
             <input
               type="text"
               required
@@ -140,7 +191,9 @@ export const BudgetCalculator: React.FC = () => {
           </div>
 
           <div>
-            <label className="block text-[11px] text-slate-500 mb-1 font-medium">金额 (元)</label>
+            <label className="block text-[11px] text-slate-500 mb-1 font-medium">
+              金额 (元)
+            </label>
             <input
               type="number"
               required
@@ -154,10 +207,14 @@ export const BudgetCalculator: React.FC = () => {
           </div>
 
           <div>
-            <label className="block text-[11px] text-slate-500 mb-1 font-medium">类别</label>
+            <label className="block text-[11px] text-slate-500 mb-1 font-medium">
+              类别
+            </label>
             <select
               value={newCategory}
-              onChange={(e) => setNewCategory(e.target.value as ExpenseRecord['category'])}
+              onChange={(e) =>
+                setNewCategory(e.target.value as ExpenseRecord["category"])
+              }
               className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-900 focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 shadow-sm"
             >
               <option value="fuel">⛽ 燃油加油</option>
@@ -171,7 +228,9 @@ export const BudgetCalculator: React.FC = () => {
           </div>
 
           <div>
-            <label className="block text-[11px] text-slate-500 mb-1 font-medium">付款人 / 资金池</label>
+            <label className="block text-[11px] text-slate-500 mb-1 font-medium">
+              付款人 / 资金池
+            </label>
             <input
               type="text"
               value={newPayer}
@@ -200,7 +259,9 @@ export const BudgetCalculator: React.FC = () => {
             <FileSpreadsheet className="w-4 h-4 text-blue-600" />
             <span>自驾开销明细表</span>
           </h3>
-          <span className="text-xs text-slate-500">共 {expenses.length} 条记录</span>
+          <span className="text-xs text-slate-500">
+            共 {expenses.length} 条记录
+          </span>
         </div>
 
         <div className="overflow-x-auto rounded-xl border border-slate-200">
@@ -219,15 +280,26 @@ export const BudgetCalculator: React.FC = () => {
               {expenses.map((item) => {
                 const cat = getCategoryLabel(item.category);
                 return (
-                  <tr key={item.id} className="hover:bg-slate-50 transition-colors">
+                  <tr
+                    key={item.id}
+                    className="hover:bg-slate-50 transition-colors"
+                  >
                     <td className="p-3">
-                      <span className={`px-2 py-0.5 rounded text-[11px] font-semibold ${cat.color}`}>
+                      <span
+                        className={`px-2 py-0.5 rounded text-[11px] font-semibold ${cat.color}`}
+                      >
                         {cat.label}
                       </span>
                     </td>
                     <td className="p-3">
-                      <div className="font-bold text-slate-900">{item.title}</div>
-                      {item.notes && <div className="text-[10px] text-slate-500 mt-0.5">{item.notes}</div>}
+                      <div className="font-bold text-slate-900">
+                        {item.title}
+                      </div>
+                      {item.notes && (
+                        <div className="text-[10px] text-slate-500 mt-0.5">
+                          {item.notes}
+                        </div>
+                      )}
                     </td>
                     <td className="p-3 text-slate-500">{item.paidBy}</td>
                     <td className="p-3 text-right font-mono font-bold text-emerald-600">
