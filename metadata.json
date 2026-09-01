@@ -1,0 +1,8 @@
+{
+  "name": "通辽-318进藏-317出藏22天自驾路书",
+  "description": "9月15日至10月6日通辽进出藏22天全景自驾路书与行程助手，支持PDF排版打印、海拔与路线剖面、司机轮换与预算记账。",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
