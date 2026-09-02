@@ -3,19 +3,39 @@ import { createServer } from "http";
 import { Server } from "socket.io";
 import path from "path";
 import { createServer as createViteServer } from "vite";
-import { initializeApp } from 'firebase/app';
-import { getFirestore, doc, setDoc, getDoc, collection, getDocs, addDoc, deleteDoc, query, orderBy } from 'firebase/firestore';
+import fs from "fs";
 
-const firebaseConfig = {
-  projectId: "radiant-wallaby-3vk22",
-  appId: "1:514376144553:web:ffb463aeca44ac79c0fbb8",
-  apiKey: "AIzaSyBk0jfG5soeZGR2dcmfBrFw9ahr5DhNM5w",
-  authDomain: "radiant-wallaby-3vk22.firebaseapp.com",
-  firestoreDatabaseId: "ai-studio-31831722-0ab8b04b-6fbc-4eeb-9952-5c04bbf49c42",
+const DATA_FILE = path.join(process.cwd(), "local_db.json");
+
+// Define default data structure
+const defaultData = {
+  checklist: null,
+  expenses: [],
+  driverTracker: null,
+  roadbook: null
 };
 
-const firebaseApp = initializeApp(firebaseConfig);
-const db = getFirestore(firebaseApp, firebaseConfig.firestoreDatabaseId);
+let dbData = { ...defaultData };
+
+// Load data from local JSON file
+if (fs.existsSync(DATA_FILE)) {
+  try {
+    const raw = fs.readFileSync(DATA_FILE, "utf-8");
+    dbData = { ...defaultData, ...JSON.parse(raw) };
+    console.log("Local database loaded successfully.");
+  } catch (e) {
+    console.error("Error reading local DB file:", e);
+  }
+}
+
+// Helper to save data to local JSON file
+const saveDB = () => {
+  try {
+    fs.writeFileSync(DATA_FILE, JSON.stringify(dbData, null, 2), "utf-8");
+  } catch (e) {
+    console.error("Error writing to local DB file:", e);
+  }
+};
 
 async function startServer() {
   const app = express();
@@ -25,67 +45,50 @@ async function startServer() {
     cors: { origin: "*" }
   });
 
-  let checklistCache: any = null;
-  let expensesCache: any[] = [];
-  let driverTrackerCache: any = null;
-  let roadbookCache: any = null;
-
-  try {
-    const clSnap = await getDoc(doc(db, 'shared_state', 'tibet_checklist'));
-    if (clSnap.exists()) checklistCache = clSnap.data().categories;
-
-    const exSnap = await getDocs(query(collection(db, 'expenses'), orderBy('createdAt', 'desc')));
-    exSnap.forEach(d => expensesCache.push({ id: d.id, ...d.data() }));
-
-    const drSnap = await getDoc(doc(db, 'shared_state', 'driver_tracker'));
-    if (drSnap.exists()) driverTrackerCache = drSnap.data();
-
-    const rbSnap = await getDoc(doc(db, 'shared_state', 'roadbook_state'));
-    if (rbSnap.exists()) roadbookCache = rbSnap.data();
-  } catch(e) {
-    console.error("Firebase init load error (Safe to ignore if offline)", e);
-  }
-
   io.on("connection", (socket) => {
-    if (checklistCache) socket.emit('checklist_update', checklistCache);
-    if (expensesCache.length > 0) socket.emit('expenses_update', expensesCache);
-    if (driverTrackerCache) socket.emit('driver_update', driverTrackerCache);
-    if (roadbookCache) socket.emit('roadbook_update', roadbookCache);
+    // 1. Send initial state to the newly connected client
+    if (dbData.checklist) socket.emit('checklist_update', dbData.checklist);
+    if (dbData.expenses && dbData.expenses.length > 0) socket.emit('expenses_update', dbData.expenses);
+    if (dbData.driverTracker) socket.emit('driver_update', dbData.driverTracker);
+    if (dbData.roadbook) socket.emit('roadbook_update', dbData.roadbook);
 
-    socket.on('update_roadbook', async (data) => {
-      roadbookCache = { ...roadbookCache, ...data };
-      socket.broadcast.emit('roadbook_update', roadbookCache);
-      try { await setDoc(doc(db, 'shared_state', 'roadbook_state'), data, { merge: true }); } catch(e){}
+    // 2. Handle Checklists updates
+    socket.on('update_checklist', (categories) => {
+      dbData.checklist = categories;
+      saveDB();
+      socket.broadcast.emit('checklist_update', categories); // Sync to other clients
     });
 
-    socket.on('update_checklist', async (categories) => {
-      checklistCache = categories;
-      socket.broadcast.emit('checklist_update', categories);
-      try { await setDoc(doc(db, 'shared_state', 'tibet_checklist'), { categories }, { merge: true }); } catch(e){}
+    // 3. Handle Expenses updates
+    socket.on('add_expense', (expense) => {
+      const newEx = { id: Date.now().toString() + Math.random().toString(36).substring(7), ...expense };
+      dbData.expenses = [newEx, ...(dbData.expenses || [])];
+      saveDB();
+      io.emit('expenses_update', dbData.expenses); // Sync to all clients including sender
     });
 
-    socket.on('add_expense', async (expense) => {
-      try {
-        const docRef = await addDoc(collection(db, 'expenses'), expense);
-        const newEx = { id: docRef.id, ...expense };
-        expensesCache = [newEx, ...expensesCache];
-        io.emit('expenses_update', expensesCache);
-      } catch(e) {}
+    socket.on('delete_expense', (id) => {
+      dbData.expenses = (dbData.expenses || []).filter((ex: any) => ex.id !== id);
+      saveDB();
+      io.emit('expenses_update', dbData.expenses);
     });
 
-    socket.on('delete_expense', async (id) => {
-      expensesCache = expensesCache.filter(ex => ex.id !== id);
-      io.emit('expenses_update', expensesCache);
-      try { await deleteDoc(doc(db, 'expenses', id)); } catch(e){}
+    // 4. Handle Driver Tracker updates
+    socket.on('update_driver', (data) => {
+      dbData.driverTracker = { ...(dbData.driverTracker || {}), ...data };
+      saveDB();
+      socket.broadcast.emit('driver_update', dbData.driverTracker);
     });
 
-    socket.on('update_driver', async (data) => {
-      driverTrackerCache = { ...driverTrackerCache, ...data };
-      socket.broadcast.emit('driver_update', driverTrackerCache);
-      try { await setDoc(doc(db, 'shared_state', 'driver_tracker'), data, { merge: true }); } catch(e){}
+    // 5. Handle Roadbook completion updates
+    socket.on('update_roadbook', (data) => {
+      dbData.roadbook = { ...(dbData.roadbook || {}), ...data };
+      saveDB();
+      socket.broadcast.emit('roadbook_update', dbData.roadbook);
     });
   });
 
+  // Vite middleware for development or Static files for production
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({
       server: { middlewareMode: true },
