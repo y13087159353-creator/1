@@ -50,3 +50,13 @@ export const subscribeToDriverTracker = (onUpdate: (data: { drivers?: any[], cur
 export const updateDriverTracker = async (data: { drivers?: any[], currentActiveDriverIndex?: number }) => {
   socket.emit('update_driver', data);
 };
+
+// === 4. 路书打卡与笔记 ===
+export const subscribeToRoadbookState = (onUpdate: (data: { completedDays?: number[], userNotes?: Record<number, string> }) => void) => {
+  const handler = (data: any) => onUpdate(data);
+  socket.on('roadbook_update', handler);
+  return () => socket.off('roadbook_update', handler);
+};
+export const updateRoadbookState = async (data: { completedDays?: number[], userNotes?: Record<number, string> }) => {
+  socket.emit('update_roadbook', data);
+};

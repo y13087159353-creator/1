@@ -25,6 +25,8 @@ import {
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
+import { subscribeToRoadbookState, updateRoadbookState } from './lib/dataService';
+
 export default function App() {
   const [activeTab, setActiveTab] = React.useState<'itinerary' | 'elevation' | 'drivers' | 'budget' | 'checklist' | 'map'>('itinerary');
   const [isPrintMode, setIsPrintMode] = React.useState(false);
@@ -52,11 +54,27 @@ export default function App() {
     localStorage.setItem('tibet_roadbook_notes', JSON.stringify(userNotes));
   }, [userNotes]);
 
+  React.useEffect(() => {
+    const unsubscribe = subscribeToRoadbookState((data) => {
+      if (data.completedDays) {
+        setCompletedDays(data.completedDays);
+        localStorage.setItem('tibet_roadbook_completed_days', JSON.stringify(data.completedDays));
+      }
+      if (data.userNotes) {
+        setUserNotes(data.userNotes);
+        localStorage.setItem('tibet_roadbook_notes', JSON.stringify(data.userNotes));
+      }
+    });
+    return unsubscribe;
+  }, []);
+
   const handleToggleComplete = (dayNumber: number) => {
+    let next: number[];
     if (completedDays.includes(dayNumber)) {
-      setCompletedDays(completedDays.filter((d) => d !== dayNumber));
+      next = completedDays.filter((d) => d !== dayNumber);
+      setCompletedDays(next);
     } else {
-      const next = [...completedDays, dayNumber];
+      next = [...completedDays, dayNumber];
       setCompletedDays(next);
 
       // Trigger confetti on milestone days (e.g. Day 13 reached Lhasa, or Day 22 returned to Tongliao!)
@@ -68,13 +86,18 @@ export default function App() {
         });
       }
     }
+    updateRoadbookState({ completedDays: next });
   };
 
   const handleSaveNote = (dayNumber: number, note: string) => {
-    setUserNotes((prev) => ({
-      ...prev,
-      [dayNumber]: note,
-    }));
+    setUserNotes((prev) => {
+      const next = {
+        ...prev,
+        [dayNumber]: note,
+      };
+      updateRoadbookState({ userNotes: next });
+      return next;
+    });
   };
 
   // Filter days logic

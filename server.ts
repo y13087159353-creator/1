@@ -4,7 +4,7 @@ import { Server } from "socket.io";
 import path from "path";
 import { createServer as createViteServer } from "vite";
 import { initializeApp } from 'firebase/app';
-import { getFirestore, doc, setDoc, getDoc, collection, getDocs, addDoc, deleteDoc, onSnapshot, query, orderBy } from 'firebase/firestore';
+import { getFirestore, doc, setDoc, getDoc, collection, getDocs, addDoc, deleteDoc, query, orderBy } from 'firebase/firestore';
 
 const firebaseConfig = {
   projectId: "radiant-wallaby-3vk22",
@@ -13,6 +13,7 @@ const firebaseConfig = {
   authDomain: "radiant-wallaby-3vk22.firebaseapp.com",
   firestoreDatabaseId: "ai-studio-31831722-0ab8b04b-6fbc-4eeb-9952-5c04bbf49c42",
 };
+
 const firebaseApp = initializeApp(firebaseConfig);
 const db = getFirestore(firebaseApp, firebaseConfig.firestoreDatabaseId);
 
@@ -24,12 +25,11 @@ async function startServer() {
     cors: { origin: "*" }
   });
 
-  // State caches (Memory-first for instant sync)
   let checklistCache: any = null;
   let expensesCache: any[] = [];
   let driverTrackerCache: any = null;
+  let roadbookCache: any = null;
 
-  // Initial load from Firebase
   try {
     const clSnap = await getDoc(doc(db, 'shared_state', 'tibet_checklist'));
     if (clSnap.exists()) checklistCache = clSnap.data().categories;
@@ -39,20 +39,28 @@ async function startServer() {
 
     const drSnap = await getDoc(doc(db, 'shared_state', 'driver_tracker'));
     if (drSnap.exists()) driverTrackerCache = drSnap.data();
+
+    const rbSnap = await getDoc(doc(db, 'shared_state', 'roadbook_state'));
+    if (rbSnap.exists()) roadbookCache = rbSnap.data();
   } catch(e) {
     console.error("Firebase init load error (Safe to ignore if offline)", e);
   }
 
-  // Socket logic
   io.on("connection", (socket) => {
-    // Send initial state to the connected client
     if (checklistCache) socket.emit('checklist_update', checklistCache);
     if (expensesCache.length > 0) socket.emit('expenses_update', expensesCache);
     if (driverTrackerCache) socket.emit('driver_update', driverTrackerCache);
+    if (roadbookCache) socket.emit('roadbook_update', roadbookCache);
+
+    socket.on('update_roadbook', async (data) => {
+      roadbookCache = { ...roadbookCache, ...data };
+      socket.broadcast.emit('roadbook_update', roadbookCache);
+      try { await setDoc(doc(db, 'shared_state', 'roadbook_state'), data, { merge: true }); } catch(e){}
+    });
 
     socket.on('update_checklist', async (categories) => {
       checklistCache = categories;
-      socket.broadcast.emit('checklist_update', categories); // Sync others
+      socket.broadcast.emit('checklist_update', categories);
       try { await setDoc(doc(db, 'shared_state', 'tibet_checklist'), { categories }, { merge: true }); } catch(e){}
     });
 
@@ -60,14 +68,14 @@ async function startServer() {
       try {
         const docRef = await addDoc(collection(db, 'expenses'), expense);
         const newEx = { id: docRef.id, ...expense };
-        expensesCache = [newEx, ...expensesCache]; // Add to top
-        io.emit('expenses_update', expensesCache); // Sync all
+        expensesCache = [newEx, ...expensesCache];
+        io.emit('expenses_update', expensesCache);
       } catch(e) {}
     });
 
     socket.on('delete_expense', async (id) => {
       expensesCache = expensesCache.filter(ex => ex.id !== id);
-      io.emit('expenses_update', expensesCache); // Sync all
+      io.emit('expenses_update', expensesCache);
       try { await deleteDoc(doc(db, 'expenses', id)); } catch(e){}
     });
 
@@ -78,7 +86,6 @@ async function startServer() {
     });
   });
 
-  // Vite middleware
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({
       server: { middlewareMode: true },
