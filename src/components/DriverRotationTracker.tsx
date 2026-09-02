@@ -4,6 +4,38 @@ import { Car, Clock, ShieldAlert, Users, Play, Pause, RotateCcw, AlertTriangle, 
 import { subscribeToDriverTracker, updateDriverTracker } from '../lib/dataService';
 
 
+const playBeep = () => {
+  try {
+    const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
+    if (!AudioContext) return;
+    const ctx = new AudioContext();
+    
+    const playTone = (frequency: number, startTime: number, duration: number) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(frequency, ctx.currentTime);
+      
+      gain.gain.setValueAtTime(0, startTime);
+      gain.gain.linearRampToValueAtTime(1, startTime + 0.05);
+      gain.gain.linearRampToValueAtTime(0, startTime + duration);
+      
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      
+      osc.start(startTime);
+      osc.stop(startTime + duration);
+    };
+
+    const now = ctx.currentTime;
+    playTone(880, now, 0.2); // Beep 1
+    playTone(880, now + 0.3, 0.2); // Beep 2
+    playTone(880, now + 0.6, 0.5); // Beep 3 (longer)
+  } catch (e) {
+    console.warn("Audio playback failed", e);
+  }
+};
+
 export const DriverRotationTracker: React.FC = () => {
   // 3 Drivers state
   const [drivers, setDrivers] = React.useState([
@@ -44,7 +76,10 @@ export const DriverRotationTracker: React.FC = () => {
       interval = setInterval(() => {
         setTimeLeft((prev) => prev - 1);
       }, 1000);
-    } else if (timeLeft === 0) {
+    } else if (isTimerRunning && timeLeft === 0) {
+      setIsTimerRunning(false);
+      playBeep(); // Trigger sound alert when timer ends
+    } else if (!isTimerRunning && timeLeft === 0) {
       setIsTimerRunning(false);
     }
     return () => clearInterval(interval);

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Printer, 
   Copy, 
@@ -12,7 +12,8 @@ import {
   Calendar,
   Users,
   ShieldAlert,
-  Sparkles
+  Sparkles,
+  Clock
 } from 'lucide-react';
 import { copyToClipboard, downloadTextFile, generateMarkdownRoadbook } from '../utils/exportUtils';
 import { ITINERARY_DAYS } from '../data/itineraryData';
@@ -30,7 +31,34 @@ export const Header: React.FC<HeaderProps> = ({
   onPrint,
   completedDaysCount,
 }) => {
-  const [copied, setCopied] = React.useState(false);
+  const [copied, setCopied] = useState(false);
+  const [daysRemaining, setDaysRemaining] = useState(0);
+
+  // Constants for Circular Progress Bar
+  const totalDays = 22;
+  const progressPercentage = (completedDaysCount / totalDays) * 100;
+  const radius = 16;
+  const circumference = 2 * Math.PI * radius;
+  const strokeDashoffset = circumference - (progressPercentage / 100) * circumference;
+
+  useEffect(() => {
+    // Countdown to Sept 15, 2026 (assuming current year is 2026 based on the context)
+    const targetDate = new Date('2026-09-15T00:00:00').getTime();
+    
+    const updateCountdown = () => {
+      const now = new Date().getTime();
+      const distance = targetDate - now;
+      if (distance > 0) {
+        setDaysRemaining(Math.ceil(distance / (1000 * 60 * 60 * 24)));
+      } else {
+        setDaysRemaining(0);
+      }
+    };
+    
+    updateCountdown();
+    const interval = setInterval(updateCountdown, 1000 * 60 * 60); // update every hour
+    return () => clearInterval(interval);
+  }, []);
 
   const handleCopyMarkdown = async () => {
     const md = generateMarkdownRoadbook(ITINERARY_DAYS);
@@ -65,6 +93,45 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
 
         <div className="flex gap-4 sm:gap-6 items-center w-full lg:w-auto overflow-x-auto pb-2 lg:pb-0 scrollbar-none">
+          {/* Circular Progress Bar */}
+          <div className="flex items-center gap-3 shrink-0 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-200">
+            <div className="relative w-10 h-10 flex items-center justify-center">
+              <svg className="w-full h-full transform -rotate-90">
+                <circle cx="20" cy="20" r="16" stroke="currentColor" strokeWidth="3" fill="transparent" className="text-slate-200" />
+                <circle
+                  cx="20"
+                  cy="20"
+                  r="16"
+                  stroke="currentColor"
+                  strokeWidth="3"
+                  fill="transparent"
+                  strokeDasharray={circumference}
+                  strokeDashoffset={strokeDashoffset}
+                  strokeLinecap="round"
+                  className="text-emerald-500 transition-all duration-1000 ease-out"
+                />
+              </svg>
+              <span className="absolute text-[10px] font-bold text-slate-700">{completedDaysCount}/{totalDays}</span>
+            </div>
+            <div className="flex flex-col">
+              <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">行程进度</span>
+              <span className="text-xs font-bold text-slate-800">{Math.round(progressPercentage)}%</span>
+            </div>
+          </div>
+
+          <div className="h-8 w-px bg-slate-200 shrink-0 hidden sm:block"></div>
+
+          {/* Countdown Timer */}
+          <div className="flex flex-col items-center shrink-0 bg-blue-50 px-3 py-1.5 rounded-xl border border-blue-100">
+             <span className="text-[10px] text-blue-600 font-bold uppercase tracking-wider flex items-center gap-1"><Clock className="w-3 h-3"/>距离出发仅剩</span>
+             <div className="flex items-baseline gap-1">
+               <span className="text-lg font-black text-blue-700">{daysRemaining}</span>
+               <span className="text-xs text-blue-600 font-medium">天</span>
+             </div>
+          </div>
+
+          <div className="h-8 w-px bg-slate-200 shrink-0 hidden sm:block"></div>
+
           <div className="text-right shrink-0">
             <p className="text-xs text-slate-400 font-medium">团队预算</p>
             <p className="text-lg font-bold text-blue-600">¥40,000 <span className="text-[10px] text-slate-400">/ 4人</span></p>

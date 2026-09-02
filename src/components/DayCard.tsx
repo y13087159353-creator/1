@@ -19,6 +19,8 @@ import {
   Share2
 } from 'lucide-react';
 import { DayItinerary } from '../types';
+import { WeatherWidget } from './WeatherWidget';
+import { MiniElevationChart } from './MiniElevationChart';
 
 interface DayCardProps {
   day: DayItinerary;
@@ -104,8 +106,12 @@ export const DayCard: React.FC<DayCardProps> = ({
                 )}
               </div>
 
-              <h3 className="text-lg sm:text-xl font-bold text-slate-900 flex items-center gap-2">
+              <h3 className="text-lg sm:text-xl font-bold text-slate-900 flex flex-col sm:flex-row sm:items-center gap-2 mt-1.5">
                 <span>{day.routeTitle}</span>
+                <div className="flex flex-wrap items-center gap-2">
+                  <WeatherWidget destination={day.to} dateStr={day.fullDate} />
+                  <MiniElevationChart start={day.startAltitude} max={day.maxAltitude} end={day.endAltitude} />
+                </div>
               </h3>
             </div>
           </div>
