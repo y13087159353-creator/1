@@ -1,5 +1,5 @@
 import mqtt from 'mqtt';
-import { ChecklistCategory, ExpenseRecord } from '../types';
+import { ChecklistCategory, ExpenseRecord, PhotoPost } from '../types';
 
 // Connect to the public EMQX MQTT broker over Secure WebSockets
 const TOPIC_PREFIX = 'tibet_tour_app_3vk22_secret_room_1029384756';
@@ -21,6 +21,7 @@ const listeners = {
   expenses: [] as ((data: ExpenseRecord[]) => void)[],
   driverTracker: [] as ((data: any) => void)[],
   roadbook: [] as ((data: any) => void)[],
+  photos: [] as ((data: PhotoPost[]) => void)[],
 };
 
 // --- Local Storage Helpers ---
@@ -44,6 +45,7 @@ let currentChecklist: ChecklistCategory[] | null = loadLocal('checklist', null);
 let currentExpenses: ExpenseRecord[] = loadLocal('expenses', []);
 let currentDriverTracker: any = loadLocal('driverTracker', {});
 let currentRoadbook: any = loadLocal('roadbook', {});
+let currentPhotos: PhotoPost[] = loadLocal('photos', []);
 
 // Handle incoming messages
 client.on('message', (topic, message) => {
@@ -67,6 +69,10 @@ client.on('message', (topic, message) => {
       currentRoadbook = { ...currentRoadbook, ...payload };
       saveLocal('roadbook', currentRoadbook);
       listeners.roadbook.forEach(fn => fn(currentRoadbook));
+    } else if (subtopic === 'photos') {
+      currentPhotos = payload;
+      saveLocal('photos', payload);
+      listeners.photos.forEach(fn => fn(payload));
     }
   } catch (e) {
     console.error('Error parsing MQTT payload', e);
@@ -151,4 +157,33 @@ export const updateRoadbookState = async (data: { completedDays?: number[], user
   currentRoadbook = { ...currentRoadbook, ...data };
   saveLocal('roadbook', currentRoadbook);
   publishRetained('roadbook', currentRoadbook);
+};
+
+// === 5. 旅途公共照片墙 ===
+export const subscribeToPhotos = (onUpdate: (photos: PhotoPost[]) => void) => {
+  if (currentPhotos && currentPhotos.length > 0) onUpdate(currentPhotos);
+  listeners.photos.push(onUpdate);
+  return () => {
+    listeners.photos = listeners.photos.filter(fn => fn !== onUpdate);
+  };
+};
+
+export const addPhotoPost = async (post: Omit<PhotoPost, 'id' | 'timestamp'>) => {
+  const newPost: PhotoPost = {
+    id: Date.now().toString() + Math.random().toString(36).substring(7),
+    timestamp: Date.now(),
+    ...post
+  };
+  // Keep only the latest 30 photos to avoid localStorage / MQTT size limits
+  const updated = [newPost, ...currentPhotos].slice(0, 30);
+  currentPhotos = updated;
+  saveLocal('photos', updated);
+  publishRetained('photos', updated);
+};
+
+export const deletePhotoPost = async (id: string) => {
+  const updated = currentPhotos.filter(p => p.id !== id);
+  currentPhotos = updated;
+  saveLocal('photos', updated);
+  publishRetained('photos', updated);
 };

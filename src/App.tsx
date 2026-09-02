@@ -8,6 +8,7 @@ import { TibetChecklist } from './components/TibetChecklist';
 import { RouteMapVisualizer } from './components/RouteMapVisualizer';
 import { PrintRoadbook } from './components/PrintRoadbook';
 import { OfflineGuide } from './components/OfflineGuide';
+import PhotoWall from './components/PhotoWall';
 import { ITINERARY_DAYS, PHASES } from './data/itineraryData';
 import { 
   Search, 
@@ -28,7 +29,7 @@ import confetti from 'canvas-confetti';
 import { subscribeToRoadbookState, updateRoadbookState } from './lib/dataService';
 
 export default function App() {
-  const [activeTab, setActiveTab] = React.useState<'itinerary' | 'elevation' | 'drivers' | 'budget' | 'checklist' | 'map'>('itinerary');
+  const [activeTab, setActiveTab] = React.useState<'itinerary' | 'elevation' | 'drivers' | 'budget' | 'checklist' | 'map' | 'photos'>('itinerary');
   const [isPrintMode, setIsPrintMode] = React.useState(false);
   const [searchQuery, setSearchQuery] = React.useState('');
   const [selectedPhaseFilter, setSelectedPhaseFilter] = React.useState<number | 'all'>('all');
@@ -348,6 +349,7 @@ export default function App() {
 
         {/* TAB 6: Tibet Checklist & Emergency Kit */}
         {activeTab === 'checklist' && <TibetChecklist />}
+        {activeTab === 'photos' && <PhotoWall />}
       </main>
 
       {/* Emergency & Safe Return Footer */}

@@ -80,3 +80,11 @@ export interface ChecklistCategory {
     required: boolean;
   }[];
 }
+
+export interface PhotoPost {
+  id: string;
+  sender: string;
+  base64Data: string;
+  caption?: string;
+  timestamp: number;
+}
