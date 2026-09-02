@@ -9,6 +9,7 @@ import { RouteMapVisualizer } from './components/RouteMapVisualizer';
 import { PrintRoadbook } from './components/PrintRoadbook';
 import { OfflineGuide } from './components/OfflineGuide';
 import PhotoWall from './components/PhotoWall';
+import { TodayBriefing } from './components/TodayBriefing';
 import { ITINERARY_DAYS, PHASES } from './data/itineraryData';
 import { 
   Search, 
@@ -29,6 +30,17 @@ import confetti from 'canvas-confetti';
 import { subscribeToRoadbookState, updateRoadbookState } from './lib/dataService';
 
 export default function App() {
+  const [todayItinerary, setTodayItinerary] = React.useState<typeof ITINERARY_DAYS[0] | undefined>(undefined);
+
+  React.useEffect(() => {
+    const todayStr = new Date().toISOString().split('T')[0];
+    let match = ITINERARY_DAYS.find(d => d.fullDate === todayStr);
+    if (!match && new Date() < new Date('2026-09-15')) {
+      match = ITINERARY_DAYS[0];
+    }
+    setTodayItinerary(match);
+  }, []);
+
   const [activeTab, setActiveTab] = React.useState<'itinerary' | 'elevation' | 'drivers' | 'budget' | 'checklist' | 'map' | 'photos'>('itinerary');
   const [isPrintMode, setIsPrintMode] = React.useState(false);
   const [searchQuery, setSearchQuery] = React.useState('');
@@ -175,6 +187,8 @@ export default function App() {
         {/* TAB 1: 22 Days Daily Itinerary */}
         {activeTab === 'itinerary' && (
           <div className="space-y-6">
+            <TodayBriefing todayItinerary={todayItinerary} onJump={jumpToDay} />
+
             {/* Offline Alert Prompt */}
             <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 flex items-start sm:items-center gap-3 shadow-sm">
               <WifiOff className="w-5 h-5 text-blue-600 shrink-0 sm:mt-0 mt-0.5" />
