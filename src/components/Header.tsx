@@ -140,6 +140,16 @@ export const Header: React.FC<HeaderProps> = ({
           <div className="h-10 w-px bg-slate-200 shrink-0"></div>
           
           <div className="flex items-center gap-2 shrink-0">
+            <a
+              href="/Tibet-Roadbook.html"
+              download="通辽-川藏自驾路书(免翻墙单文件版).html"
+              className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-bold flex items-center gap-2 cursor-pointer transition-colors shadow-sm animate-pulse"
+              title="下载离线单文件版，无需翻墙直接在微信内打开使用！"
+            >
+              <Download className="w-4 h-4" />
+              <span>⬇️ 下载免翻墙离线版 (发给车友)</span>
+            </a>
+            
             <button
               id="copy-markdown-btn"
               onClick={handleCopyMarkdown}
